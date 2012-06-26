@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'nokogiri'
-require 'mechanize'
 require 'open-uri'
 
 url = "http://stgeorge.biz/premium-business-listings/accountants-and-cpas"
