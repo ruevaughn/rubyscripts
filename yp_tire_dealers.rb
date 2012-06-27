@@ -7,4 +7,7 @@ mech = Mechanize.new
 mech.user_agent_alias = "Linux Firefox"
 mech.get(HOME_URL)
 
-puts mech.page.links
+#Fix this method
+mech.page.search('.categories-list a').each do |link|
+  puts link
+end
