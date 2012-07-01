@@ -2,44 +2,53 @@ require 'rubygems'
 require 'mechanize'
 require 'spreadsheet'
 
-book = Spreadsheet::Workbook.new
-sheet1 = book.create_worksheet
-puts book.class
-puts sheet1.class
-a = gets
-
- sheet1.row(0).concat %w{Name Country Acknowlegement}
-  sheet1[1,0] = 'Japan'
-  row = sheet1.row(1)
-  row.push 'Creator of Ruby'
-  row.unshift 'Yukihiro Matsumoto'
-  sheet1.row(2).replace [ 'Daniel J. Berger', 'U.S.A.',
-                          'Author of original code for Spreadsheet::Excel' ]
-  sheet1.row(3).push 'Charles Lowe', 'Author of the ruby-ole Library'
-  sheet1.row(3).insert 1, 'Unknown'
-  sheet1.update_row 4, 'Hannes Wyss', 'Switzerland', 'Author'
-
-   book.write 'businesses.xls'
-
+# Establish connection to site 
 HOME_URL = "http://www.yellowpages.com/saint-george-ut/trends/1"
+yellowpages = Mechanize.new                     
+yellowpages.user_agent_alias = "Linux Firefox"
+yellowpages.get(HOME_URL)
 
-mech = Mechanize.new 										
-mech.user_agent_alias = "Linux Firefox"
-mech.get(HOME_URL)  															
-mech.page.search('.categories-list a').each do |link|       
-  mech.click(link)
- 
-  mech.page.search('.listing_content').each do |business|	
-  #subpage.download(business.link, 'business.txt')
-  bus = business.css('.url').text.strip
-  address = business.css('.street-address').text.strip
-  city = business.css('.locality').text.strip
-  state = business.css('.region').text.strip 
-  zip = business.css('.postal-code').text.strip
+# Initialize excel document
+excel_doc = Spreadsheet::Workbook.new
+a = 0
+# This iterator goes through each link on the trends/1 page and clicks it
+yellowpages.page.search('.categories-list a').each do |link|       
+  # Prepare new worksheet within excel spreadsheet for current business category
+  worksheet = excel_doc.create_worksheet
+  worksheet.name = link.text
+  worksheet.row(0).concat %w{Company Address City State Zip}
 
-
-
-  puts "#{bus} #{address}, #{city}, #{state}, #{zip} \n \n"
-  end
+  yellowpages.click(link)
+  
+  puts '*'
+  row_num = 0
+  
+  # if a >= 50
+  #  puts "over 50"
   # a = gets
+  # end 
+  # a += 1
+  
+  yellowpages.page.search('.listing_content').each do |business|	
+    
+    row_num += 1
+    bus = business.css('.url').text.strip
+    address = business.css('.street-address').text.strip
+    city = business.css('.locality').text.strip
+    state = business.css('.region').text.strip 
+    zip = business.css('.postal-code').text.strip
+    website = business.css('.website-feature').at_css('track-visit-website no-tracks')
+    website.text
+    a = gets
+    # gets data to excel file
+    row = worksheet.row(row_num)
+    row.push bus
+    row.push address
+    row.push city
+    row.push state
+    row.push zip
+    excel_doc.write 'businesses.xls'
+  end
+
+
 end
