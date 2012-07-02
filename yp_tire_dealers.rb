@@ -1,16 +1,16 @@
 require 'rubygems'
 require 'mechanize'
 require 'spreadsheet'
-
-  def next_button(yellowpages, worksheet, row_num)
-    yellowpages.page.search('.next a').each do |next_button|
-      yellowpages.click(next_button)
-      yellowpages.page.search('.listing_content').each do |business|
-        get_business_info(business, worksheet, row_num)
-      end
-    next_button(yellowpages, worksheet, row_num)
+  
+def next_button(yellowpages, worksheet, row_num)
+  yellowpages.page.search('.next a').each do |next_button|
+    yellowpages.click(next_button)
+    yellowpages.page.search('.listing_content').each do |business|
+      get_business_info(business, worksheet, row_num)
     end
+    next_button(yellowpages, worksheet, row_num)
   end
+end
 
   def get_business_info(business, worksheet, row_num)
     @row_num += 1
@@ -37,31 +37,29 @@ yellowpages.get(HOME_URL)
 excel_doc = Spreadsheet::Workbook.new
 a = 0
 
-yellowpages.page.search('.page-navigation a').each do |link|
-  yellowpages.click(link)
-end
-# This iterator goes through each link on the trends/1 page and clicks it
-yellowpages.page.search('.categories-list a').each do |link|       
-  if a > 3
-    puts "over #{a}"
-    a = gets
-   end 
-   a += 1
+yellowpages.page.search('.page-navigation a').each do |pagination_link|
+  yellowpages.page.search('.categories-list a').each do |link|       
+    # if a > 206
+    #  puts "over #{a}"
+    #  a = gets
+    # end 
+    # a += 1
+    # puts a
+    worksheet = excel_doc.create_worksheet
+    worksheet.name = link.text
+    worksheet.row(0).concat %w{Company Address City State Zip Website}
+    @row_num = 0
+  
+    yellowpages.click(link)
+  
+    excel_doc.write 'businesses.xls'
+  
+    yellowpages.page.search('.listing_content').each do |business|  
+      get_business_info(business, worksheet, @row_num)
+    end
 
-  worksheet = excel_doc.create_worksheet
-  worksheet.name = link.text
-  worksheet.row(0).concat %w{Company Address City State Zip Website}
-  @row_num = 0
-  
-  yellowpages.click(link)
-  
-  excel_doc.write 'businesses.xls'
-  
-  yellowpages.page.search('.listing_content').each do |business|	
-    get_business_info(business, worksheet, @row_num)
+    next_button(yellowpages, worksheet, @row_num)
   end
-
-  next_button(yellowpages, worksheet, @row_num)
+  puts "Next Page"
+  yellowpages.click(pagination_link)
 end
-  
-
