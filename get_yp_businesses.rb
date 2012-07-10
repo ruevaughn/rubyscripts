@@ -1,3 +1,5 @@
+# gem install --version '=1.0.0' mechanize
+gem 'mechanize', version:'1.0.0'
 require 'rubygems'
 require 'mechanize'
 require 'spreadsheet'
