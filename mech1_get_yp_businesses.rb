@@ -1,10 +1,11 @@
-#gem 'mechanize', '=1.0.0'
+gem 'mechanize', '=1.0.0'
 # gem install --version '=1.0.0' mechanize
 require 'rubygems'
 require 'mechanize'
 require 'spreadsheet'
 
-puts "Start"  
+puts Time.now
+puts "Start"
 def next_button(yellowpages, worksheet, row_num)
   yellowpages.page.search('.next a').each do |next_button|
     yellowpages.click(next_button)
@@ -42,17 +43,20 @@ a = 0
 
 yellowpages.page.search('.page-navigation a').each do |pagination_link|
   yellowpages.page.search('.categories-list a').each do |link|       
-    # if a > 206
-    #  puts "over #{a}"
-    #  a = gets
+    # if a > 5
+    # puts "over #{a}"
+    # a = gets
     # end 
+    a += 1
+    puts "#{a}, #{Time.now}"
+
     worksheet = excel_doc.create_worksheet
     worksheet.name = link.text
     worksheet.row(0).concat %w{Company Address City State Zip Website}
     @row_num = 0
   
     yellowpages.click(link)
-  
+    
   
     yellowpages.page.search('.listing_content').each do |business|  
       get_business_info(business, worksheet, @row_num)
@@ -60,10 +64,11 @@ yellowpages.page.search('.page-navigation a').each do |pagination_link|
 
     next_button(yellowpages, worksheet, @row_num)
   end
-  a += 1
-  puts a
-  excel_doc.write 'businesses.xls'
+  
+  
   puts "Next Page"
+  excel_doc.write 'businesses.xls'
   yellowpages.click(pagination_link)
 end
 puts "Finish"
+puts Time.now
