@@ -1,20 +1,58 @@
-gem 'mechanize', '=1.0.0'
+#gem 'mechanize', '=1.0.0'
 # gem install --version '=1.0.0' mechanize
 require 'rubygems'
 require 'mechanize'
 require 'spreadsheet'
 
-puts Time.now
-puts "Start"
-def next_button(yellowpages, worksheet, row_num)
-  yellowpages.page.search('.next a').each do |next_button|
-    yellowpages.click(next_button)
-    yellowpages.page.search('.listing_content').each do |business|
-      get_business_info(business, worksheet, row_num)
-    end
-    next_button(yellowpages, worksheet, row_num)
+class MyApp
+  def initialize 
+    home_url = "http://www.yellowpages.com/saint-george-ut/trends/1"
+    $yellowpages = Mechanize.new   
+    $yellowpages.user_agent_alias = "Linux Firefox"
+    $yellowpages.get(home_url)
+    $excel_doc = Spreadsheet::Workbook.new
+    $a = 0
   end
-end
+
+  def run
+    a = $a
+    $yellowpages.page.search('.page-navigation a').each do |pagination_link|
+      $yellowpages.page.search('.categories-list a').each do |link| 
+        
+        #if a == 5
+        #  puts "over #{a}"
+        #  a = gets
+        #end 
+        #a += 1
+        #puts a      
+        
+        worksheet = $excel_doc.create_worksheet
+        worksheet.name = link.text
+        worksheet.row(0).concat %w{Company Address City State Zip Website}
+        @row_num = 0
+        $yellowpages.click(link)
+        $yellowpages.page.search('.listing_content').each do |business|  
+          get_business_info(business, worksheet, @row_num)
+        end
+        next_button($yellowpages, worksheet, @row_num)
+        $excel_doc.write 'businesses.xls'
+      end
+  
+      puts "Next Page"
+      $yellowpages.click(pagination_link)
+    end
+
+  end
+
+  def next_button(yellowpages, worksheet, row_num)
+    $yellowpages.page.search('.next a').each do |next_button|
+      $yellowpages.click(next_button)
+      $yellowpages.page.search('.listing_content').each do |business|
+        get_business_info(business, worksheet, row_num)
+      end
+      next_button($yellowpages, worksheet, row_num)
+    end
+  end
 
   def get_business_info(business, worksheet, row_num)
     @row_num += 1
@@ -30,45 +68,5 @@ end
     row = worksheet.row(@row_num)
     row.push bus, address, city, state, zip, website
   end
-
-# Establish connection to site 
-HOME_URL = "http://www.yellowpages.com/saint-george-ut/trends/1"
-yellowpages = Mechanize.new                     
-yellowpages.user_agent_alias = "Linux Firefox"
-yellowpages.get(HOME_URL)
-
-# Initialize excel document
-excel_doc = Spreadsheet::Workbook.new
-a = 0
-
-yellowpages.page.search('.page-navigation a').each do |pagination_link|
-  yellowpages.page.search('.categories-list a').each do |link|       
-    # if a > 5
-    # puts "over #{a}"
-    # a = gets
-    # end 
-    a += 1
-    puts "#{a}, #{Time.now}"
-
-    worksheet = excel_doc.create_worksheet
-    worksheet.name = link.text
-    worksheet.row(0).concat %w{Company Address City State Zip Website}
-    @row_num = 0
-  
-    yellowpages.click(link)
-    
-  
-    yellowpages.page.search('.listing_content').each do |business|  
-      get_business_info(business, worksheet, @row_num)
-    end
-
-    next_button(yellowpages, worksheet, @row_num)
-  end
-  
-  
-  puts "Next Page"
-  excel_doc.write 'businesses.xls'
-  yellowpages.click(pagination_link)
 end
-puts "Finish"
-puts Time.now
+MyApp.new.run
