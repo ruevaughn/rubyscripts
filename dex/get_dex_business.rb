@@ -1,64 +1,50 @@
-# gem 'mechanize', '=1.0.0'
-# gem install --version '=1.0.0' mechanize
-require 'rubygems'
-require 'mechanize'
-require 'csv'
+require 'rubygems'  # apt-get install rubygems
+require 'mechanize' # gem install mechanize
+require 'nokogiri'  # gem install nokogiri
+require 'csv'       # gem install csv
 
 class MyApp
   def initialize 
-    home_url = "stgeorge-categories.html"
-    $dexknows = Mechanize.new   
-    $dexknows.user_agent_alias = "Linux Firefox"
-    $dexknows.get(home_url)
-    $a = 0
+    # Open local file with Nokogiri.
+    @doc = Nokogiri::HTML(open('stgeorge-categories.html'))
+    
+    # Initialize Mechanize Agent
+    @dexknows = Mechanize.new   
+    @dexknows.user_agent_alias = "Linux Firefox"
   end
 
   def run
-    a = $a
-      $dexknows.page.search('.siteMapFidget a').each do |link| 
-        CSV.open("businesses.csv", "a") do |csv|
-          csv << ["-", link]
-        end
-        
-         #if a == 2
-         # puts "over #{a}"
-         # a = gets
-         #end
-         a += 1
-         puts "#{a} - #{Time.now}"     
-
-        $dexknows.click(link)
-        $dexknows.page.search('.listing').each do |business|  
-          get_business_info(business, @row_num)
-        end
-        next_button($dexknows, @row_num)
+    # For each 'a' (business) link in local file, send it to Mechanize to do a page search on it.
+    @doc.css('a').each do |a|
+      link = a['href']
+      @dexknows.get(link)
+      @dexknows.page.search('.listing').each do |business|
+        get_business_info(business)
       end
-  end
-
-  def next_button(dexknows, row_num)
-    $dexknows.page.search('a.prevnext').each do |next_button|
-      $dexknows.click(next_button)
-      $dexknows.page.search('.listing_content').each do |business|
-        get_business_info(business, row_num)
-      end
-      next_button($dexknows, row_num)
     end
   end
 
-  def get_business_info(business, row_num)
+  # # # # 
+  # Functions
+  # # # #
 
+  # I think you know what this function is doing
+  def get_business_info(business)
     bus = business.at_css('.details h2 a').text.strip
     address = business.css('h3.address').text.strip
-    city = 'St. George'
-    state = 'UT' 
-    zip = '84770'
     phone = business.css('.phone').text.strip
-    website = business.at_css('.tool_web a')
-    website = website.at_css('a')['href'] if website
+    website_node = business.at_css('.tool_web a')
+    website = website_node['href'] if website_node
+    
+    # Don't need these, they are in address
+    # city = 'St. George'
+    # state = 'UT' 
+    # zip = '84770'
 
     CSV.open("businesses.csv", "a") do |csv|
-      csv << [bus, address, city, state, zip, phone, website]
+      csv << [bus, address, phone, website]
     end
+    puts "wrote #{bus}"
   end
 end
 MyApp.new.run
