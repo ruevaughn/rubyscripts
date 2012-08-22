@@ -1,2 +1,6 @@
 *.xls
 *.csv
+dex/*.xls
+dex/*.csv
+yellowpages/*.xls
+yellowpages/*.csv
