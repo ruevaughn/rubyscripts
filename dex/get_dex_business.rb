@@ -9,7 +9,7 @@ class MyApp
     File.delete("businesses.csv") if File.exist?("businesses.csv")
 
     # Open local file with Nokogiri.
-    @doc = Nokogiri::HTML(open('stgeorge-categories.html'))
+    @doc = Nokogiri::HTML(open('_all.html'))
     
     # Initialize Mechanize Agent
     @dexknows = Mechanize.new   
